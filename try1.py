@@ -34,6 +34,43 @@ Index(['PARTY_ID', 'TICKER_SYMBOL', 'EXCHANGE_CD', 'PUBLISH_DATE',
       dtype='object')
 
 '''
+col_temp = ['TICKER_SYMBOL','END_DATE','SELL_EXP','ADMIN_EXP','N_INCOME']
+tempdata = pd.DataFrame(data,columns = col_temp).head(10000)
+'''
+    TICKER_SYMBOL    END_DATE      SELL_EXP     ADMIN_EXP      N_INCOME
+0               2  2009-03-31  2.385783e+08  2.828142e+08  8.885426e+08
+1               2  2011-09-30  1.689365e+09  1.271355e+09  4.106349e+09
+2               2  2013-06-30  1.431103e+09  1.192209e+09  5.335891e+09
+3               2  2014-12-31  4.521889e+09  3.902618e+09  1.928752e+10
+4               2  2014-12-31  4.521889e+09  3.902618e+09  1.928752e+10
+5               2  2015-03-31  6.872442e+08  7.128519e+08  9.080262e+08
+6               2  2016-09-30  3.327747e+09  3.171476e+09  1.129025e+10
+7               4  2008-12-31  5.592508e+06  1.623657e+07 -1.148419e+07
+8               4  2008-12-31  5.592508e+06  1.623657e+07 -1.148419e+07
+9               4  2009-06-30  2.685072e+06  7.489249e+06 -8.338033e+05
+10              4  2009-12-31  5.788340e+06  1.579437e+07  4.532534e+06
+11              2  2008-09-30  1.133777e+09  1.003706e+09  2.634320e+09
+12              2  2008-12-31  1.860350e+09  1.530799e+09  4.639869e+09
+13              2  2009-12-31  1.513717e+09  1.441987e+09  6.430008e+09
+14              2  2010-03-31  2.932904e+08  3.092530e+08  1.175955e+09
+15              2  2010-03-31  2.932904e+08  3.092530e+08  1.175955e+09
+16              2  2012-03-31  5.822364e+08  5.064567e+08  1.530547e+09
+17              2  2012-03-31  5.822364e+08  5.064567e+08  1.530547e+09
+18              2  2012-09-30  2.104936e+09  1.596507e+09  6.146172e+09
+19              2  2012-12-31  3.056378e+09  2.780308e+09  1.566259e+10
+20              2  2013-03-31  6.233992e+08  5.727349e+08  1.789369e+09
+21              2  2013-12-31  3.864714e+09  3.002838e+09  1.829755e+10
+22              2  2009-03-31  2.385783e+08  2.828142e+08  8.885426e+08
+23              2  2011-03-31  3.935214e+08  5.626788e+08  1.189965e+09
+24              2  2011-06-30  9.567482e+08  8.702434e+08  3.252518e+09
+25              2  2012-12-31  3.056378e+09  2.780308e+09  1.566259e+10
+26              2  2015-03-31  6.872442e+08  7.128519e+08  9.080262e+08
+27              2  2015-12-31  4.138274e+09  4.745250e+09  2.594944e+10
+28              2  2017-06-30  2.102697e+09  2.604623e+09  1.005299e+10
+
+'''
+
+
 def series_to_supervised(data, n_in=1,n_out=1,dropnan=True):
     #统计输入数据列数（特征数）
     n_vars = 1 if type(data) is list else data.shape[1]
@@ -64,21 +101,25 @@ def series_to_supervised(data, n_in=1,n_out=1,dropnan=True):
     return agg
     
 #数据归一化
-scaler = MinMaxScaler(feature_range=(0,1))
-scaled_data =scaler.fit_transfor(example[['c1','c2','c3']])
+#tempdata.iloc[:,[2,3,4]]
+#scaler = MinMaxScaler(feature_range=(0,1))
+#scaled_data =scaler.fit_transform(tempdata.iloc[:,[2,3,4]])
 #将时序数据转化为监督问题数据
-reframed = series_to_supervised(scaled_data,1,1)
+tempdata1 = tempdata.iloc[:,[2,3,4]]
+print(tempdata1.values)
+reframed = series_to_supervised(tempdata1.values,1,1)
+print(reframed.values)
 #删除无用的label
-reframed.drop(reframed.columns[[6,7,8,9]],axis=1,inplace=True)
+#reframed.drop(reframed.columns[[6,7,8,9]],axis=1,inplace=True)
 
 
 
 
 
 #划分数据集
-train_days = 400
-valid_days = 150
-values = redf.values
+train_days = 5500
+valid_days = 1500
+values = reframed.values
 train = values[:train_days, :]
 valid = values[train_days:train_days+valid_days,:]
 test = values[train_days+valid_days:,:]
@@ -100,7 +141,7 @@ model1.add(Dense(1,activation='linear'))
 model1.compile(loss='mean_squared_error',optimizer='adam')
 
 #拟合
-LSTM = model.fit(train_X,train_y,epochs=100,batch_size=32,validation_data = (valid_X,valid_y),verbose=2, shuffle=False)
+LSTM = model1.fit(train_X,train_y,epochs=100,batch_size=32,validation_data = (valid_X,valid_y),verbose=2, shuffle=False)
 plt.plot(LSTM.LSTM['loss'],label='train')
 plt.plot(LSTM.LSTM['val_loss'],label='valid')
 #显示图例
@@ -110,7 +151,7 @@ plt.show()
 
 
 #模型预测并可视化
-plt.figure(figsize=(24,8))
+plt.figure(figsize=(24,3))
 train_predict = model.predict(train_X)
 valid_predict = model.predict(valid_X)
 test_predict = model.predict(test_X)
