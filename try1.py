@@ -36,6 +36,7 @@ Index(['PARTY_ID', 'TICKER_SYMBOL', 'EXCHANGE_CD', 'PUBLISH_DATE',
 '''
 col_temp = ['TICKER_SYMBOL','END_DATE','SELL_EXP','ADMIN_EXP','N_INCOME']
 tempdata = pd.DataFrame(data,columns = col_temp).head(10000)
+
 '''
     TICKER_SYMBOL    END_DATE      SELL_EXP     ADMIN_EXP      N_INCOME
 0               2  2009-03-31  2.385783e+08  2.828142e+08  8.885426e+08
@@ -95,19 +96,24 @@ def series_to_supervised(data, n_in=1,n_out=1,dropnan=True):
     #把输入序列和预测序列合并到一起
     agg = pd.concat(cols, axis=1)
     agg.columns = names
+    print(agg.columns)
     #丢弃被错位行
+    #Index(['var1(t-1)', 'var2(t-1)', 'var3(t-1)', 'var1(t)', 'var2(t)', 'var3(t)'], dtype='object')
     if dropnan:
         agg.dropna(inplace=True)
+    print(agg.head())
     return agg
     
 #数据归一化
 #tempdata.iloc[:,[2,3,4]]
-#scaler = MinMaxScaler(feature_range=(0,1))
+scaler = MinMaxScaler(feature_range=(0,1))
 #scaled_data =scaler.fit_transform(tempdata.iloc[:,[2,3,4]])
 #将时序数据转化为监督问题数据
 tempdata1 = tempdata.iloc[:,[2,3,4]]
-print(tempdata1.values)
-reframed = series_to_supervised(tempdata1.values,1,1)
+tempdata1.fillna(0.0,inplace=True)
+tempdata1 = scaler.fit_transform(tempdata1)
+#print(tempdata1.values)
+reframed = series_to_supervised(tempdata1,1,1)
 print(reframed.values)
 #删除无用的label
 #reframed.drop(reframed.columns[[6,7,8,9]],axis=1,inplace=True)
@@ -132,31 +138,40 @@ train_X = train_X.reshape((train_X.shape[0],1,train_X.shape[1]))
 valid_X = valid_X.reshape((valid_X.shape[0],1,valid_X.shape[1]))
 test_X = test_X.reshape((test_X.shape[0],1,test_X.shape[1]))
 print(train_X.shape, train_y.shape,valid_X.shape,valid_y.shape,test_X.shape,test_y.shape)
-
+#(5500, 1, 5) (5500,) (1500, 1, 5) (1500,) (2155, 1, 5) (2155,)
 
 #建立模型训练
 model1 = Sequential()
-model1.add(LSTM(50,activation='relu',input_shape=(train_X.shape[1],train_X.shape[2]),return_sequences=True))
-model1.add(Dense(1,activation='linear'))
-model1.compile(loss='mean_squared_error',optimizer='adam')
+#输入层为50个cell组成的lstm,接受时间步长为1,特征数为5的输入（这里有疑问，为什么本来要作为预测项的t-1的Nincome也要作为特征？）
+model1.add(LSTM(50,input_shape=(train_X.shape[1],train_X.shape[2])))
+model1.add(Dense(1))
+model1.compile(loss='mae',optimizer='adam')
+#model1.add(LSTM(50,activation='relu',input_shape=(train_X.shape[1],train_X.shape[2]),return_sequences=True))
+#如果returnsequences=true 返回【samples,output_dims】else return [samples,step,output_dims]
+#model1.add(LSTM(50,activation='relu',input_shape=(train_X.shape[1],train_X.shape[2]))
+#model1.add(Dense(1,activation='linear'))
+#model1.compile(loss='mean_squared_error',optimizer='adam')
 
 #拟合
-LSTM = model1.fit(train_X,train_y,epochs=100,batch_size=32,validation_data = (valid_X,valid_y),verbose=2, shuffle=False)
-plt.plot(LSTM.LSTM['loss'],label='train')
-plt.plot(LSTM.LSTM['val_loss'],label='valid')
+LSTM = model1.fit(train_X,train_y,epochs=100,batch_size=100,validation_data = (valid_X,valid_y),verbose=2, shuffle=False)
+print(model1.evaluate(test_X,test_y))
+print('-------------------------------------------------------------')
+print(str(model1.predict(test_X))+'=================='+str(test_y))
+plt.plot(LSTM.history['loss'],label='train')
+plt.plot(LSTM.history['val_loss'],label='valid')
 #显示图例
 plt.legend()
 plt.show()
 
 
-
-#模型预测并可视化
-plt.figure(figsize=(24,3))
-train_predict = model.predict(train_X)
-valid_predict = model.predict(valid_X)
-test_predict = model.predict(test_X)
+'''
+plt.figure(figsize=(3000,3))
+train_predict = model1.predict(train_X)
+valid_predict = model1.predict(valid_X)
+test_predict = model1.predict(test_X)
 plt.plot(values[:,-1],c='b')
 plt.plot([x for x in train_predict],c='g')
 plt.plot([None for _ in train_predict] + [x for x in valid_predict],c='y')
 plt.plot([None for _ in train_predict] + [None for _ in valid.predict] + [x for x in test_predict],c='r')
 plt.show()
+'''
