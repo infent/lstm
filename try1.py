@@ -36,7 +36,23 @@ Index(['PARTY_ID', 'TICKER_SYMBOL', 'EXCHANGE_CD', 'PUBLISH_DATE',
 '''
 col_temp = ['TICKER_SYMBOL','END_DATE','SELL_EXP','ADMIN_EXP','N_INCOME']
 tempdata = pd.DataFrame(data,columns = col_temp).head(10000)
-
+'''
+result analyse:
+ - 0s - loss: 0.0427 - val_loss: 0.0061
+Epoch 2/100
+ - 0s - loss: 0.0084 - val_loss: 0.0042
+Epoch 3/100
+ - 0s - loss: 0.0077 - val_loss: 0.0043
+上来loss就低的一比,这是为什么?
+预测:
+[0.12347972]
+ [0.12208527]
+ [0.12162907]
+实际:
+[0.12360479 0.12157936 0.12182428]
+原因与我们归一化了有很大关系,我们预测的数量级在e8-11级别即使预测值看似很接近但是差距在万或十万级别,但是这也太准了吧,怎么回事
+后来又想了想,利润这个东西本来季度间除了个别行业差距也不大,用t-1预测t是否有失偏颇?
+'''
 '''
     TICKER_SYMBOL    END_DATE      SELL_EXP     ADMIN_EXP      N_INCOME
 0               2  2009-03-31  2.385783e+08  2.828142e+08  8.885426e+08
@@ -144,6 +160,7 @@ print(train_X.shape, train_y.shape,valid_X.shape,valid_y.shape,test_X.shape,test
 model1 = Sequential()
 #输入层为50个cell组成的lstm,接受时间步长为1,特征数为5的输入（这里有疑问，为什么本来要作为预测项的t-1的Nincome也要作为特征？）
 model1.add(LSTM(50,input_shape=(train_X.shape[1],train_X.shape[2])))
+#接了一个全连接层,来输出预测值
 model1.add(Dense(1))
 model1.compile(loss='mae',optimizer='adam')
 #model1.add(LSTM(50,activation='relu',input_shape=(train_X.shape[1],train_X.shape[2]),return_sequences=True))
