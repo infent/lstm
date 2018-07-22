@@ -1,0 +1,39 @@
+
+# -*- encoding:utf-8 -*-
+import pandas as pd
+import numpy as np
+import sys
+from keras.layers.core import Dense, Activation, Dropout
+from keras.layers.recurrent import LSTM
+from keras.models import Sequential
+from sklearn.preprocessing import MinMaxScaler
+
+# 窗口长度
+LEN_SEQ = 4
+
+def load_one(data, x):
+    global LEN_SEQ
+    ticker = data.query("TICKER_SYMBOL==" + str(x)) # 个股
+    arr = ticker.ix[:,[2,3,4,5]].values # 矩阵
+    # 做时序差分
+    return train, label
+
+def build_model():
+    pass
+
+def predict_point_by_point(model, data):
+    pass
+
+def main():
+    dic = {}
+    data = pd.read_csv("./data.csv", header=0)
+    # 做minmax
+
+    for i in range(5): # 按股循环
+        train, label, b_size = load_data(i)
+        # 做模型
+        # 做预测
+        dic[str(i)] = "预测数值"
+    
+if __name__ == "__main__":
+    sys.exit(main())
