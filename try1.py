@@ -161,8 +161,8 @@ print(train_X.shape, train_y.shape,valid_X.shape,valid_y.shape,test_X.shape,test
 
 #建立模型训练
 model1 = Sequential()
-#输入层为50个cell组成的lstm,接受时间步长为1,特征数为5的输入（这里有疑问，为什么本来要作为预测项的t-1的Nincome也要作为特征？）
-model1.add(LSTM(50,input_shape=(train_X.shape[1],train_X.shape[2])))
+#输入层为50个cell组成的lstm,50太多太慢，数据又少已过拟合改为20接受时间步长为1,特征数为5的输入（这里有疑问，为什么本来要作为预测项的t-1的Nincome也要作为特征？）
+model1.add(LSTM(20,input_shape=(train_X.shape[1],train_X.shape[2])))
 #接了一个全连接层,来输出预测值
 model1.add(Dense(1))
 model1.compile(loss='mae',optimizer='adam')
